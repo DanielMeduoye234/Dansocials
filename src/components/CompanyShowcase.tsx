@@ -59,10 +59,10 @@ export default function CompanyShowcase({
                   HX
                 </div>
                 <div>
-                  <h3 className="font-f1 font-extrabold text-xl text-slate-900 tracking-wide uppercase">
+                  <h3 className="font-sans font-black text-xl text-slate-900 tracking-wide uppercase">
                     HEXAVIA
                   </h3>
-                  <span className="text-[11px] font-bold text-sky-600 tracking-wide uppercase">
+                  <span className="text-[11px] font-bold text-sky-600 tracking-wide uppercase font-sans">
                     Corporate Advisory &amp; Masterclasses
                   </span>
                 </div>
@@ -72,7 +72,7 @@ export default function CompanyShowcase({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleCompanyClick('Hexavia')}
-                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-f1 font-bold border border-sky-200 transition-colors"
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-sans font-bold border border-sky-200 transition-colors cursor-pointer"
               >
                 <span>VIEW WORKS</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -138,10 +138,10 @@ export default function CompanyShowcase({
                   TD
                 </div>
                 <div>
-                  <h3 className="font-f1 font-extrabold text-xl text-slate-900 tracking-wide uppercase">
+                  <h3 className="font-sans font-black text-xl text-slate-900 tracking-wide uppercase">
                     TDOTWHEELS
                   </h3>
-                  <span className="text-[11px] font-bold text-sky-600 tracking-wide uppercase">
+                  <span className="text-[11px] font-bold text-sky-600 tracking-wide uppercase font-sans">
                     Luxury Automotive &amp; Wheels
                   </span>
                 </div>
@@ -151,7 +151,7 @@ export default function CompanyShowcase({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleCompanyClick('Tdotwheels')}
-                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-f1 font-bold border border-sky-200 transition-colors"
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-sans font-bold border border-sky-200 transition-colors cursor-pointer"
               >
                 <span>VIEW WORKS</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />

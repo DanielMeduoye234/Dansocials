@@ -72,7 +72,7 @@ export default function ProjectCard({ item, onSelect }: ProjectCardProps) {
         <div className="absolute top-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between pointer-events-none">
           {/* Company Badge */}
           <span
-            className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-[11px] font-f1 font-extrabold tracking-wider uppercase shadow-md ${
+            className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-[11px] font-sans font-bold tracking-wide uppercase shadow-md ${
               isHexavia
                 ? 'bg-sky-500 text-white border border-sky-400'
                 : 'bg-slate-900 text-sky-400 border border-sky-500/40'
@@ -84,13 +84,13 @@ export default function ProjectCard({ item, onSelect }: ProjectCardProps) {
           {/* Right Badges */}
           <div className="flex items-center space-x-1.5">
             {item.isMetaAd && (
-              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-f1 font-black tracking-wider uppercase bg-blue-600 text-white shadow-md">
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-sans font-bold tracking-wider uppercase bg-blue-600 text-white shadow-md">
                 <Target className="w-2.5 h-2.5" />
                 <span>META ADS</span>
               </span>
             )}
 
-            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-f1 font-black tracking-wider uppercase bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white shadow-md">
+            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-sans font-bold tracking-wider uppercase bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white shadow-md">
               <Instagram className="w-2.5 h-2.5" />
               <span>IG REEL</span>
             </span>
@@ -99,20 +99,20 @@ export default function ProjectCard({ item, onSelect }: ProjectCardProps) {
       </div>
 
       {/* Card Content Body */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+      <div className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="font-f1 font-bold text-sm sm:text-base text-slate-900 group-hover:text-sky-600 transition-colors line-clamp-2 uppercase tracking-wide">
+          <h3 className="font-sans font-bold text-sm sm:text-base text-slate-900 group-hover:text-sky-600 transition-colors line-clamp-2 leading-snug">
             {item.title}
           </h3>
 
-          <p className="mt-1.5 text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed">
+          <p className="mt-1 text-xs sm:text-sm text-slate-500 line-clamp-2 leading-relaxed font-sans">
             {item.description}
           </p>
         </div>
 
         {/* Highlights & Tags */}
-        <div className="mt-3.5 pt-3 border-t border-slate-100">
-          <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2.5">
+        <div className="mt-3 pt-2.5 border-t border-slate-100">
+          <div className="flex flex-wrap gap-1 mb-2">
             {item.tags.slice(0, 3).map((tag, idx) => (
               <span
                 key={idx}
@@ -123,8 +123,8 @@ export default function ProjectCard({ item, onSelect }: ProjectCardProps) {
             ))}
           </div>
 
-          <div className="flex items-center justify-between text-[11px] sm:text-xs font-f1 font-bold text-sky-600 group-hover:text-sky-700">
-            <span className="tracking-wider uppercase">
+          <div className="flex items-center justify-between text-xs font-sans font-bold text-sky-600 group-hover:text-sky-700">
+            <span className="tracking-wide uppercase">
               {item.mediaType === 'video' ? 'WATCH FULL REEL' : 'VIEW WORK'}
             </span>
             <div className="flex items-center space-x-2">

@@ -5,7 +5,7 @@ import { PortfolioItem, Company, MediaType } from '@/types/portfolio';
 import ProjectCard from './ProjectCard';
 import { 
   Filter, Play, Image, Layers, Search, Sparkles, 
-  RotateCcw, ArrowUpDown, Instagram, ExternalLink 
+  RotateCcw, ArrowUpDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -78,165 +78,145 @@ export default function PortfolioGrid({
   };
 
   return (
-    <section id="portfolio" className="py-12 sm:py-16 md:py-20 bg-white">
+    <section id="portfolio" className="py-8 sm:py-16 md:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-5 border-b border-sky-100 gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-5 sm:mb-8 pb-3 sm:pb-5 border-b border-sky-100 gap-2">
           <div>
-            <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 text-[10px] sm:text-xs font-f1 font-bold tracking-wider uppercase mb-1.5">
+            <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 text-[10px] sm:text-xs font-bold tracking-wider uppercase mb-1">
               <Sparkles className="w-3 h-3 text-sky-500" />
               <span>CURATED CAMPAIGNS</span>
             </div>
             <h2 className="font-f1 text-xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight uppercase">
               FEATURED <span className="text-sky-600">PORTFOLIO WORKS</span>
             </h2>
-            <p className="mt-1 text-slate-500 text-xs sm:text-sm">
+            <p className="mt-0.5 text-slate-500 text-xs sm:text-sm font-sans">
               Explore short-form video reels and creative campaigns across Hexavia &amp; Tdotwheels.
             </p>
           </div>
 
-          <div className="text-xs font-medium text-slate-500">
+          <div className="text-[11px] sm:text-xs font-medium text-slate-500 font-sans">
             Showing <strong className="text-slate-900">{filteredItems.length}</strong> campaigns
           </div>
         </div>
 
-        {/* Streamlined Filter Controls Bar */}
-        <div className="bg-sky-50/50 p-3.5 sm:p-5 rounded-2xl border border-sky-100 mb-6 space-y-3.5">
+        {/* Compact, Modern Swipeable Filters - Never Cluttered on Mobile */}
+        <div className="bg-sky-50/40 p-2.5 sm:p-4 rounded-2xl border border-sky-100 mb-6 space-y-2.5">
           
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            
-            {/* Filter 1: Company Selector */}
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="text-[10px] sm:text-xs font-f1 font-bold uppercase text-slate-600 mr-1">
-                BRAND:
-              </span>
+          {/* Horizontal Pill Bar */}
+          <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 px-0.5">
+            <button
+              onClick={() => {
+                onChangeCompany('All');
+                onChangeType('All');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-sans font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                selectedCompany === 'All' && selectedType === 'All'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
+              }`}
+            >
+              All Works
+            </button>
 
+            <button
+              onClick={() => {
+                onChangeCompany('Hexavia');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-sans font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                selectedCompany === 'Hexavia'
+                  ? 'bg-sky-500 text-white shadow-sm'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
+              }`}
+            >
+              Hexavia
+            </button>
+
+            <button
+              onClick={() => {
+                onChangeCompany('Tdotwheels');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-sans font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                selectedCompany === 'Tdotwheels'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
+              }`}
+            >
+              Tdotwheels
+            </button>
+
+            <button
+              onClick={() => {
+                onChangeType(selectedType === 'video' ? 'All' : 'video');
+              }}
+              className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-sans font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                selectedType === 'video'
+                  ? 'bg-sky-500 text-white shadow-sm'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
+              }`}
+            >
+              <Play className="w-2.5 h-2.5 fill-current" />
+              <span>Videos</span>
+            </button>
+
+            <button
+              onClick={() => {
+                onChangeType(selectedType === 'graphics' ? 'All' : 'graphics');
+              }}
+              className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-sans font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                selectedType === 'graphics'
+                  ? 'bg-sky-500 text-white shadow-sm'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
+              }`}
+            >
+              <Image className="w-3 h-3" />
+              <span>Graphics</span>
+            </button>
+
+            {(selectedCompany !== 'All' || selectedType !== 'All' || searchQuery) && (
               <button
-                onClick={() => onChangeCompany('All')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-f1 font-bold transition-all ${
-                  selectedCompany === 'All'
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
-                }`}
+                onClick={resetAllFilters}
+                className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-sans font-semibold text-sky-700 hover:bg-sky-100 whitespace-nowrap cursor-pointer"
               >
-                ALL
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset</span>
               </button>
-
-              <button
-                onClick={() => onChangeCompany('Hexavia')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-f1 font-bold transition-all ${
-                  selectedCompany === 'Hexavia'
-                    ? 'bg-sky-500 text-white shadow-sm'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
-                }`}
-              >
-                HEXAVIA
-              </button>
-
-              <button
-                onClick={() => onChangeCompany('Tdotwheels')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-f1 font-bold transition-all ${
-                  selectedCompany === 'Tdotwheels'
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
-                }`}
-              >
-                TDOTWHEELS
-              </button>
-            </div>
-
-            {/* Filter 2: Category Selector */}
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="text-[10px] sm:text-xs font-f1 font-bold uppercase text-slate-600 mr-1">
-                TYPE:
-              </span>
-
-              <button
-                onClick={() => onChangeType('All')}
-                className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-f1 font-bold transition-all ${
-                  selectedType === 'All'
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
-                }`}
-              >
-                <Layers className="w-3 h-3" />
-                <span>ALL</span>
-              </button>
-
-              <button
-                onClick={() => onChangeType('video')}
-                className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-f1 font-bold transition-all ${
-                  selectedType === 'video'
-                    ? 'bg-sky-500 text-white shadow-sm'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
-                }`}
-              >
-                <Play className="w-2.5 h-2.5 fill-current" />
-                <span>VIDEOS</span>
-              </button>
-
-              <button
-                onClick={() => onChangeType('graphics')}
-                className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-f1 font-bold transition-all ${
-                  selectedType === 'graphics'
-                    ? 'bg-sky-500 text-white shadow-sm'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-sky-50'
-                }`}
-              >
-                <Image className="w-3 h-3" />
-                <span>GRAPHICS</span>
-              </button>
-            </div>
-
+            )}
           </div>
 
-          {/* Search Bar & Sorter */}
-          <div className="pt-2 border-t border-sky-100 flex flex-col sm:flex-row items-center justify-between gap-2.5">
-            <div className="relative w-full sm:max-w-xs md:max-w-sm">
+          {/* Search Bar & Sorter Row */}
+          <div className="flex items-center gap-2 pt-1 border-t border-sky-100/70">
+            <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Search works or keywords..."
+                placeholder="Search works..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sky-400 transition-all"
+                className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sky-400 font-sans transition-all"
               />
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 sm:top-2.5" />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
             </div>
 
-            <div className="flex items-center space-x-2.5 w-full sm:w-auto justify-between sm:justify-end">
-              <div className="flex items-center space-x-1 text-xs text-slate-500 font-medium">
-                <ArrowUpDown className="w-3.5 h-3.5 text-sky-600" />
-                <span className="text-[11px] sm:text-xs">Sort:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e: any) => setSortBy(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-[11px] sm:text-xs font-semibold text-slate-700 focus:outline-none focus:border-sky-400"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="views">Highest Views</option>
-                </select>
-              </div>
-
-              {(selectedCompany !== 'All' || selectedType !== 'All' || searchQuery) && (
-                <button
-                  onClick={resetAllFilters}
-                  className="inline-flex items-center space-x-1 text-[11px] sm:text-xs font-f1 font-bold text-sky-600 hover:text-sky-800"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>RESET</span>
-                </button>
-              )}
+            <div className="flex items-center space-x-1 text-xs text-slate-500 font-sans flex-shrink-0">
+              <select
+                value={sortBy}
+                onChange={(e: any) => setSortBy(e.target.value)}
+                className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:border-sky-400"
+              >
+                <option value="newest">Newest</option>
+                <option value="views">Most Views</option>
+              </select>
             </div>
           </div>
 
         </div>
 
-        {/* Portfolio Cards Grid with Framer Motion */}
+        {/* Portfolio Cards Grid */}
         {filteredItems.length > 0 ? (
           <motion.div 
             layout
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-7"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
           >
             <AnimatePresence>
               {filteredItems.map((item) => (
@@ -249,20 +229,20 @@ export default function PortfolioGrid({
             </AnimatePresence>
           </motion.div>
         ) : (
-          <div className="text-center py-12 px-4 bg-sky-50/40 rounded-3xl border border-sky-100">
-            <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center mx-auto mb-3">
+          <div className="text-center py-10 px-4 bg-sky-50/30 rounded-3xl border border-sky-100">
+            <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center mx-auto mb-2">
               <Filter className="w-5 h-5" />
             </div>
-            <h3 className="font-f1 font-bold text-base text-slate-900 uppercase">
+            <h3 className="font-sans font-bold text-sm text-slate-900 uppercase">
               No Campaigns Found
             </h3>
-            <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+            <p className="mt-1 text-xs text-slate-500 max-w-xs mx-auto font-sans">
               No works match your current filters.
             </p>
-            <div className="mt-4 flex items-center justify-center space-x-3">
+            <div className="mt-3 flex items-center justify-center">
               <button
                 onClick={resetAllFilters}
-                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-f1 font-bold text-slate-700 hover:bg-slate-50"
+                className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-sans font-semibold text-slate-700 hover:bg-slate-50"
               >
                 Reset Filters
               </button>

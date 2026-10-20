@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { MessageCircle, Phone, Sparkles } from 'lucide-react';
+import { MessageCircle, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface FloatingContactButtonProps {
@@ -10,39 +10,33 @@ interface FloatingContactButtonProps {
 
 export default function FloatingContactButton({ onOpenModal }: FloatingContactButtonProps) {
   return (
-    <div className="fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-40">
+    <aside aria-label="Quick contact" className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 z-40">
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
         onClick={onOpenModal}
-        className="group relative flex items-center space-x-2.5 px-4 py-3 sm:px-5 sm:py-3.5 rounded-full bg-slate-950 text-white shadow-xl hover:shadow-2xl border border-slate-800 transition-all cursor-pointer"
+        className="group relative flex items-center justify-center p-3 sm:px-4 sm:py-2.5 rounded-full bg-slate-900/95 hover:bg-slate-900 text-white shadow-xl hover:shadow-2xl border border-sky-400/40 backdrop-blur-md transition-all cursor-pointer"
         aria-label="Get In Touch on WhatsApp or Phone"
       >
         {/* Pulsing Green Online Indicator */}
-        <span className="relative flex h-3 w-3">
+        <span className="absolute -top-1 -right-1 flex h-3 w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 ring-2 ring-white"></span>
         </span>
 
-        {/* WhatsApp & Phone Icons combo */}
-        <div className="flex items-center -space-x-1">
-          <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-sm ring-2 ring-slate-950">
+        {/* WhatsApp & Phone Icons */}
+        <div className="flex items-center space-x-1.5 sm:space-x-2">
+          <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-sm flex-shrink-0">
             <MessageCircle className="w-3.5 h-3.5 fill-current" />
           </div>
-          <div className="w-6 h-6 rounded-full bg-sky-500 flex items-center justify-center text-white shadow-sm ring-2 ring-slate-950">
+          <div className="w-6 h-6 rounded-full bg-sky-500 flex items-center justify-center text-white shadow-sm flex-shrink-0 hidden sm:flex">
             <Phone className="w-3 h-3 text-white" />
           </div>
-        </div>
-
-        <div className="flex flex-col text-left">
-          <span className="font-f1 font-extrabold text-[11px] sm:text-xs uppercase tracking-wider text-white group-hover:text-sky-300 transition-colors">
-            GET IN TOUCH
-          </span>
-          <span className="text-[9px] text-slate-400 font-medium hidden sm:inline-block">
-            WhatsApp &bull; Call
+          <span className="hidden sm:inline-block font-sans font-bold text-xs uppercase tracking-wider text-white pr-1">
+            Get in Touch
           </span>
         </div>
       </motion.button>
-    </div>
+    </aside>
   );
 }

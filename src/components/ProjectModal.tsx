@@ -50,7 +50,7 @@ export default function ProjectModal({ item, onClose }: ProjectModalProps) {
           <div className="flex items-center justify-between px-4 py-3 bg-slate-950/95 border-b border-slate-800/80 z-20">
             <div className="flex items-center space-x-2 min-w-0 pr-2">
               <span
-                className={`px-2 py-0.5 rounded-md text-[10px] font-f1 font-black uppercase tracking-wider ${
+                className={`px-2 py-0.5 rounded-md text-[10px] font-sans font-bold uppercase tracking-wide ${
                   isHexavia
                     ? 'bg-sky-500 text-white'
                     : 'bg-white text-slate-900'
@@ -59,7 +59,7 @@ export default function ProjectModal({ item, onClose }: ProjectModalProps) {
                 {item.company}
               </span>
 
-              <h3 className="font-f1 font-bold text-xs sm:text-sm text-white uppercase truncate">
+              <h3 className="font-sans font-bold text-xs sm:text-sm text-white truncate">
                 {item.title}
               </h3>
             </div>
