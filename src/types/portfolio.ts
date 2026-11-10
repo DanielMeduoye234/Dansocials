@@ -1,4 +1,4 @@
-export type Company = 'Hexavia' | 'Tdotwheels';
+export type Company = 'Hexavia' | 'Tdotwheels' | 'Paidflow' | 'Other';
 
 export type MediaType = 'video' | 'graphics';
 

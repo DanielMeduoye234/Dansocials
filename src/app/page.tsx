@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import CompanyShowcase from '@/components/CompanyShowcase';
 import PortfolioGrid from '@/components/PortfolioGrid';
+import OtherVideoProjectsSection from '@/components/OtherVideoProjectsSection';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import ProjectModal from '@/components/ProjectModal';
@@ -80,6 +81,12 @@ export default function Home() {
           selectedType={selectedType}
           onChangeType={setSelectedType}
           onResetToSeed={handleResetToSeed}
+        />
+
+        {/* Other Video Editing Projects (PaidFlow Videos Folder) */}
+        <OtherVideoProjectsSection
+          items={items}
+          onSelectProject={setSelectedProject}
         />
 
         {/* Contact & Booking */}

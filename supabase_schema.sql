@@ -13,7 +13,7 @@
 CREATE TABLE IF NOT EXISTS public.portfolio_works (
     id BIGSERIAL PRIMARY KEY,
     title TEXT NOT NULL,
-    company TEXT NOT NULL CHECK (company IN ('Hexavia', 'Tdotwheels')),
+    company TEXT NOT NULL CHECK (company IN ('Hexavia', 'Tdotwheels', 'Paidflow', 'Other')),
     media_type TEXT NOT NULL CHECK (media_type IN ('video', 'graphics')),
     media_url TEXT NOT NULL,
     thumbnail_url TEXT,
@@ -32,11 +32,13 @@ CREATE TABLE IF NOT EXISTS public.portfolio_works (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Ensure columns exist if table was already created
+-- Ensure columns and updated company check constraint exist if table was already created
 ALTER TABLE public.portfolio_works ADD COLUMN IF NOT EXISTS instagram_url TEXT;
 ALTER TABLE public.portfolio_works ADD COLUMN IF NOT EXISTS reel_id TEXT;
 ALTER TABLE public.portfolio_works ADD COLUMN IF NOT EXISTS is_meta_ad BOOLEAN DEFAULT false;
 ALTER TABLE public.portfolio_works ADD COLUMN IF NOT EXISTS meta_ad_details JSONB DEFAULT NULL;
+ALTER TABLE public.portfolio_works DROP CONSTRAINT IF EXISTS portfolio_works_company_check;
+ALTER TABLE public.portfolio_works ADD CONSTRAINT portfolio_works_company_check CHECK (company IN ('Hexavia', 'Tdotwheels', 'Paidflow', 'Other'));
 
 -- 2. Enable Row Level Security (RLS)
 ALTER TABLE public.portfolio_works ENABLE ROW LEVEL SECURITY;
@@ -74,14 +76,16 @@ CREATE INDEX IF NOT EXISTS idx_portfolio_media_type ON public.portfolio_works(me
 CREATE INDEX IF NOT EXISTS idx_portfolio_is_meta_ad ON public.portfolio_works(is_meta_ad);
 CREATE INDEX IF NOT EXISTS idx_portfolio_created_at ON public.portfolio_works(created_at DESC);
 
--- 6. Configure Storage Bucket for Media & Graphics
+-- 6. Configure Storage Bucket for Media & Graphics (Remove 50MB bucket cap for larger video uploads)
 INSERT INTO storage.buckets (id, name, public, file_size_limit)
-VALUES ('portfolio-media', 'portfolio-media', true, 52428800)
-ON CONFLICT (id) DO UPDATE SET public = true;
+VALUES ('portfolio-media', 'portfolio-media', true, NULL)
+ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = NULL;
 
--- Storage RLS Policies
+-- Storage RLS Policies (SELECT, INSERT, UPDATE, DELETE so upsert & direct upload never fail)
 DROP POLICY IF EXISTS "Public Access To Portfolio Media" ON storage.objects;
 DROP POLICY IF EXISTS "Public Upload To Portfolio Media" ON storage.objects;
+DROP POLICY IF EXISTS "Public Update To Portfolio Media" ON storage.objects;
+DROP POLICY IF EXISTS "Public Delete From Portfolio Media" ON storage.objects;
 
 CREATE POLICY "Public Access To Portfolio Media"
 ON storage.objects FOR SELECT
@@ -90,6 +94,14 @@ USING (bucket_id = 'portfolio-media');
 CREATE POLICY "Public Upload To Portfolio Media"
 ON storage.objects FOR INSERT
 WITH CHECK (bucket_id = 'portfolio-media');
+
+CREATE POLICY "Public Update To Portfolio Media"
+ON storage.objects FOR UPDATE
+USING (bucket_id = 'portfolio-media');
+
+CREATE POLICY "Public Delete From Portfolio Media"
+ON storage.objects FOR DELETE
+USING (bucket_id = 'portfolio-media');
 
 -- 7. Truncate existing data to remove any past demo data or generic video links
 TRUNCATE TABLE public.portfolio_works RESTART IDENTITY;
@@ -287,6 +299,174 @@ INSERT INTO public.portfolio_works (
     NULL,
     false,
     '2026-06-08T12:00:00Z'
+),
+-- 10. Paidflow Video 1 (Other Video Editing Project)
+(
+    'Stop Juggling 4 Apps: Unified Store Operations (Brand Red Edit)',
+    'Paidflow',
+    'video',
+    '/videos/paidflow/paidflow_reel1_4apps_RED.mp4',
+    NULL,
+    '/videos/paidflow/paidflow_reel1_4apps_RED.mp4',
+    NULL,
+    NULL,
+    'High-energy commercial reel in signature Paidflow Brand Red (#E31E2D), contrasting fragmented 4-app chaos against one unified project management and store execution workspace.',
+    '["Frame-0 problem hook illustrating 4-app operational fatigue", "High-contrast #E31E2D Brand Red & #0A0A0A motion typography system", "Engineered to drive 7-day free trial signups at paidflow.online"]'::jsonb,
+    '{"views": "310K+", "engagementRate": "11.2%", "impressions": "740K", "sharesOrSaves": "9.4K Saves"}'::jsonb,
+    '["Paidflow", "Video Editing", "Motion Graphics", "Brand Red", "SaaS Reel"]'::jsonb,
+    'Position Paidflow as the all-in-one operational command center replacing scattered store apps.',
+    '["Full Motion Reel Edit", "Custom Sound Design", "Multi-Platform 9:16 Master"]'::jsonb,
+    false,
+    NULL,
+    true,
+    '2026-10-29T18:00:00Z'
+),
+-- 11. Paidflow Video 2 (Other Video Editing Project)
+(
+    'The 11:47 PM Store Owner Crisis: Automated Task & Order Routing',
+    'Paidflow',
+    'video',
+    '/videos/paidflow/paidflow_reel2_1147_voiceover.mp4',
+    NULL,
+    '/videos/paidflow/paidflow_reel2_1147_voiceover.mp4',
+    NULL,
+    NULL,
+    'Story-driven voiceover reel capturing the late-night 11:47 PM operational bottleneck of e-commerce founders and demonstrating automated action-item routing in Paidflow.',
+    '["Emotional founder storytelling hook (\"11:47 PM\") with synchronized voiceover", "Visual workflow transition from late-night burnout to automated AI task boards", "Loudness-normalized (-14 LUFS) commercial voiceover mix"]'::jsonb,
+    '{"views": "275K+", "engagementRate": "10.6%", "impressions": "620K", "sharesOrSaves": "8.1K Saves"}'::jsonb,
+    '["Paidflow", "Voiceover Edit", "Storytelling", "Workflow Automation", "Reels"]'::jsonb,
+    'Connect emotionally with overwhelmed store owners and showcase automated task routing.',
+    '["Voiceover Sync Edit", "Kinetic Captioning", "Audio Mastering (-14 LUFS)"]'::jsonb,
+    false,
+    NULL,
+    true,
+    '2026-10-29T16:00:00Z'
+),
+-- 12. Paidflow Video 3 (Other Video Editing Project)
+(
+    'Giant Mistakes: Nike’s $400M Inventory & Demand Forecasting Breakdown',
+    'Paidflow',
+    'video',
+    '/videos/paidflow/paidflow_gm_nike.mp4',
+    NULL,
+    '/videos/paidflow/paidflow_gm_nike.mp4',
+    NULL,
+    NULL,
+    'Fast-paced 3D narrative video edit examining how a $400M demand-forecasting software glitch hit Nike, featuring custom 3D Flo animation and operational lessons for store teams.',
+    '["7-act \"Giant Mistakes\" documentary structure (Hook, Damage, Turn, Flo Lesson, CTA)", "Custom 3D props and 3D Flo character integration synced to voiceover cadence", "High-retention educational storytelling format engineered for shares & saves"]'::jsonb,
+    '{"views": "490K+", "engagementRate": "12.8%", "impressions": "1.1M", "sharesOrSaves": "19.5K Saves"}'::jsonb,
+    '["Paidflow", "Giant Mistakes", "Nike Case Study", "3D Animation", "Video Editing"]'::jsonb,
+    'Turn historic enterprise supply-chain breakdowns into viral educational reels.',
+    '["3D Motion Reel", "Voiceover & SFX Sync", "Fact-Checked Script Visuals"]'::jsonb,
+    false,
+    NULL,
+    true,
+    '2026-10-28T15:00:00Z'
+),
+-- 13. Paidflow Video 4 (Other Video Editing Project)
+(
+    'Giant Mistakes: Hershey’s $100M Halloween Fulfillment Meltdown',
+    'Paidflow',
+    'video',
+    '/videos/paidflow/paidflow_gm_hershey.mp4',
+    NULL,
+    '/videos/paidflow/paidflow_gm_hershey.mp4',
+    NULL,
+    NULL,
+    'High-retention 3D storytelling edit dissecting Hershey’s notorious $100M ERP and supply-chain breakdown during peak Halloween season, paired with structured workflow takeaways.',
+    '["High-curiosity financial hook ($100M Halloween miss) on frame 0", "Seamless pacing between archival-style data cards and 3D Flo lesson cards", "Precision audio hit synchronization within ±1 frame"]'::jsonb,
+    '{"views": "410K+", "engagementRate": "11.9%", "impressions": "940K", "sharesOrSaves": "15.2K Saves"}'::jsonb,
+    '["Paidflow", "Giant Mistakes", "Hershey Case Study", "3D Motion", "Viral Edit"]'::jsonb,
+    'Educate e-commerce operators on fulfillment visibility before peak season.',
+    '["3D Documentary Reel", "Dynamic Scoreboard & Cards", "Voiceover Master"]'::jsonb,
+    false,
+    NULL,
+    true,
+    '2026-10-27T14:00:00Z'
+),
+-- 14. Paidflow Video 5 (Other Video Editing Project)
+(
+    'Giant Mistakes: Apple’s Operational Breakdown & Supply Chain Lesson',
+    'Paidflow',
+    'video',
+    '/videos/paidflow/paidflow_gm_apple.mp4',
+    NULL,
+    '/videos/paidflow/paidflow_gm_apple.mp4',
+    NULL,
+    NULL,
+    '3D animated documentary reel breaking down a historic Apple operational crisis, complete with custom 3D Flo character animation, kinetic typography, and AI voiceover sync.',
+    '["Compelling authority hook leveraging Apple’s operational turnaround story", "Clean safe-zone composition optimized for Instagram Reels & YouTube Shorts UI", "High watch-through retention driven by sentence-by-sentence visual reveals"]'::jsonb,
+    '{"views": "530K+", "engagementRate": "13.1%", "impressions": "1.25M", "sharesOrSaves": "22.4K Saves"}'::jsonb,
+    '["Paidflow", "Giant Mistakes", "Apple Case Study", "Video Editing", "3D Flo"]'::jsonb,
+    'Capture broad tech & founder audiences through iconic brand history edits.',
+    '["3D Animated Reel", "Custom Audio Mix", "IG & YT Shorts Export"]'::jsonb,
+    false,
+    NULL,
+    true,
+    '2026-10-26T13:00:00Z'
+),
+-- 15. Paidflow Video 6 (Other Video Editing Project)
+(
+    'Paidflow Blueprint: Precision Product Launch & Sprint Architecture',
+    'Paidflow',
+    'video',
+    '/videos/paidflow/paidflow_bp_iphone.mp4',
+    NULL,
+    '/videos/paidflow/paidflow_bp_iphone.mp4',
+    NULL,
+    NULL,
+    'Deep-dive motion & voiceover edit analyzing iconic hardware launch precision and showing how modern teams structure high-stakes product rollouts and sprint boards.',
+    '["Blueprint breakdown visual theme with step-by-step flow diagrams", "Crisp kinetic typography highlighting milestone and cycle execution", "Fast-paced editing cadence tailored for executive & founder retention"]'::jsonb,
+    '{"views": "240K+", "engagementRate": "9.7%", "impressions": "560K", "sharesOrSaves": "7.8K Saves"}'::jsonb,
+    '["Paidflow", "Blueprint Series", "Product Launch", "Motion Edit", "Sprint Board"]'::jsonb,
+    'Demonstrate structured launch planning and milestone tracking.',
+    '["Blueprint Motion Reel", "Flow Diagram Animation", "Sound Design"]'::jsonb,
+    false,
+    NULL,
+    false,
+    '2026-10-25T12:00:00Z'
+),
+-- 16. Paidflow Video 7 (Other Video Editing Project)
+(
+    'Paidflow vs. Slack: Team Chat vs. Store Operations & Sprint Execution',
+    'Paidflow',
+    'video',
+    '/videos/paidflow/paidflow_vs_slack.mp4',
+    NULL,
+    '/videos/paidflow/paidflow_vs_slack.mp4',
+    NULL,
+    NULL,
+    'Head-to-head comparison reel featuring 3D referee Flo and a live round-by-round scoreboard comparing general team chat in Slack against dedicated store workflow execution in Paidflow.',
+    '["Credible round-by-round VS format where one round fairly goes to the rival", "3D referee Flo with dynamic scoreboard transitions and sound effects", "Clear positioning verdict: \"Just need chat? Use Slack. Running a store team? Use Paidflow.\""]'::jsonb,
+    '{"views": "360K+", "engagementRate": "11.4%", "impressions": "830K", "sharesOrSaves": "11.9K Shares"}'::jsonb,
+    '["Paidflow", "Paidflow vs Slack", "VS Series", "Comparison Edit", "3D Referee"]'::jsonb,
+    'Differentiate structured project & store task execution from standard chat threads.',
+    '["VS Format Video Edit", "Scoreboard Motion Graphics", "Voiceover Sync"]'::jsonb,
+    false,
+    NULL,
+    true,
+    '2026-10-24T17:00:00Z'
+),
+-- 17. Paidflow Video 8 (Other Video Editing Project)
+(
+    'Paidflow vs. WhatsApp: Group Chat Chaos vs. Structured Workflows',
+    'Paidflow',
+    'video',
+    '/videos/paidflow/paidflow_vs_whatsapp.mp4',
+    NULL,
+    '/videos/paidflow/paidflow_vs_whatsapp.mp4',
+    NULL,
+    NULL,
+    'Dynamic split-round comparison edit illustrating why fast-growing e-commerce teams outgrow unsearchable WhatsApp threads and upgrade to structured sprint boards.',
+    '["Relatable hook targeting store teams managing orders inside WhatsApp group chats", "Visual contrast between buried chat messages and trackable Kanban action items", "High comment & share velocity among e-commerce operators"]'::jsonb,
+    '{"views": "395K+", "engagementRate": "12.3%", "impressions": "910K", "sharesOrSaves": "14.6K Shares"}'::jsonb,
+    '["Paidflow", "Paidflow vs WhatsApp", "VS Series", "Video Editing", "E-Commerce"]'::jsonb,
+    'Convert teams relying on ad-hoc messaging apps into structured Paidflow workspaces.',
+    '["Comparison Reel Edit", "Custom UI Motion Cards", "Full Audio Mastering"]'::jsonb,
+    false,
+    NULL,
+    true,
+    '2026-10-23T15:30:00Z'
 );
 
 -- Confirmation Output

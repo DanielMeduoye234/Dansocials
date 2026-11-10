@@ -102,6 +102,18 @@ export default function Navbar({
               >
                 Tdotwheels
               </button>
+              <button
+                onClick={() => {
+                  scrollToSection('other-video-projects');
+                }}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                  activeCompany === 'Paidflow'
+                    ? 'bg-rose-600 text-white shadow-sm'
+                    : 'text-rose-600 hover:bg-rose-50 hover:text-rose-700'
+                }`}
+              >
+                Other Video Projects
+              </button>
             </div>
 
             <button
@@ -194,6 +206,14 @@ export default function Navbar({
                 >
                   <span>Featured Works</span>
                   <span className="text-[10px] text-sky-600 font-bold uppercase">View</span>
+                </button>
+
+                <button
+                  onClick={() => scrollToSection('other-video-projects')}
+                  className="px-3 py-2.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center justify-between"
+                >
+                  <span>Other Video Editing Projects (Paidflow)</span>
+                  <span className="text-[10px] text-rose-600 font-bold uppercase">8 Videos</span>
                 </button>
 
                 <button

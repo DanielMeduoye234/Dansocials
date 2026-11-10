@@ -92,7 +92,7 @@ export default function PortfolioGrid({
               FEATURED <span className="text-sky-600">PORTFOLIO WORKS</span>
             </h2>
             <p className="mt-0.5 text-slate-500 text-xs sm:text-sm font-sans">
-              Explore short-form video reels and creative campaigns across Hexavia &amp; Tdotwheels.
+              Explore short-form video reels and creative campaigns across Hexavia, Tdotwheels &amp; Paidflow.
             </p>
           </div>
 
@@ -144,6 +144,19 @@ export default function PortfolioGrid({
               }`}
             >
               Tdotwheels
+            </button>
+
+            <button
+              onClick={() => {
+                onChangeCompany('Paidflow');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-sans font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                selectedCompany === 'Paidflow'
+                  ? 'bg-rose-600 text-white shadow-sm'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-rose-50 hover:text-rose-600'
+              }`}
+            >
+              Other Video Editing (Paidflow)
             </button>
 
             <button

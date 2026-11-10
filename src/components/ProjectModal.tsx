@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { PortfolioItem } from '@/types/portfolio';
-import { X, Play, Eye, Instagram, ExternalLink } from 'lucide-react';
+import { X, Eye, Instagram, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProjectModalProps {
@@ -28,7 +28,23 @@ export default function ProjectModal({ item, onClose }: ProjectModalProps) {
   if (!item) return null;
 
   const isHexavia = item.company === 'Hexavia';
-  const hasInstagram = Boolean(item.instagramUrl || item.reelId);
+  const isPaidflow = item.company === 'Paidflow' || item.company === 'Other';
+  const videoSrc =
+    item.videoUrl ||
+    (item.mediaType === 'video' &&
+    typeof item.mediaUrl === 'string' &&
+    (item.mediaUrl.endsWith('.mp4') ||
+      item.mediaUrl.endsWith('.mov') ||
+      item.mediaUrl.endsWith('.webm'))
+      ? item.mediaUrl
+      : undefined);
+
+  const officialAccount =
+    item.company === 'Tdotwheels'
+      ? '@tdot_wheels'
+      : item.company === 'Hexavia'
+      ? '@hexavianigeria'
+      : 'paidflow.online';
 
   return (
     <AnimatePresence>
@@ -53,6 +69,8 @@ export default function ProjectModal({ item, onClose }: ProjectModalProps) {
                 className={`px-2 py-0.5 rounded-md text-[10px] font-sans font-bold uppercase tracking-wide ${
                   isHexavia
                     ? 'bg-sky-500 text-white'
+                    : isPaidflow
+                    ? 'bg-rose-600 text-white'
                     : 'bg-white text-slate-900'
                 }`}
               >
@@ -102,9 +120,9 @@ export default function ProjectModal({ item, onClose }: ProjectModalProps) {
                   className="w-full max-w-[460px] mx-auto rounded-2xl border border-slate-800 bg-black min-h-[580px] sm:min-h-[620px]"
                 />
               </div>
-            ) : item.videoUrl ? (
+            ) : videoSrc ? (
               <video
-                src={item.videoUrl}
+                src={videoSrc}
                 controls
                 autoPlay
                 playsInline
@@ -139,7 +157,7 @@ export default function ProjectModal({ item, onClose }: ProjectModalProps) {
 
             <div className="flex items-center space-x-2">
               <span className="text-[11px] text-slate-400">
-                Official: <strong className="text-white">@{item.company === 'Tdotwheels' ? 'tdot_wheels' : 'hexavianigeria'}</strong>
+                Project: <strong className="text-white">{officialAccount}</strong>
               </span>
             </div>
           </div>

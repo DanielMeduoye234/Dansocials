@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { PortfolioItem } from '@/types/portfolio';
-import { Play, Image, Eye, TrendingUp, Target, ArrowRight, Instagram } from 'lucide-react';
+import { Play, Image, Eye, Target, ArrowRight, Instagram, Film } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ProjectCardProps {
@@ -13,6 +13,29 @@ interface ProjectCardProps {
 export default function ProjectCard({ item, onSelect }: ProjectCardProps) {
   const isVideo = item.mediaType === 'video';
   const isHexavia = item.company === 'Hexavia';
+  const isPaidflow = item.company === 'Paidflow' || item.company === 'Other';
+  const videoSrc =
+    item.videoUrl ||
+    (isVideo &&
+    typeof item.mediaUrl === 'string' &&
+    (item.mediaUrl.endsWith('.mp4') ||
+      item.mediaUrl.endsWith('.mov') ||
+      item.mediaUrl.endsWith('.webm'))
+      ? item.mediaUrl
+      : undefined);
+
+  const badgeStyle = isHexavia
+    ? 'bg-sky-500 text-white border border-sky-400'
+    : isPaidflow
+    ? 'bg-rose-600 text-white border border-rose-500'
+    : 'bg-slate-900 text-sky-400 border border-sky-500/40';
+
+  const handleLabel =
+    item.company === 'Tdotwheels'
+      ? '@tdot_wheels'
+      : item.company === 'Hexavia'
+      ? '@hexavianigeria'
+      : 'paidflow.online';
 
   return (
     <motion.div
@@ -48,7 +71,48 @@ export default function ProjectCard({ item, onSelect }: ProjectCardProps) {
             <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between">
               <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-f1 font-bold bg-slate-900/90 text-pink-400 border border-pink-500/30">
                 <Instagram className="w-3 h-3" />
-                <span>@{item.company === 'Tdotwheels' ? 'tdot_wheels' : 'hexavianigeria'}</span>
+                <span>{handleLabel}</span>
+              </span>
+
+              {item.metrics.views && (
+                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-f1 font-bold bg-slate-900/90 text-white border border-white/20">
+                  <Eye className="w-3 h-3 text-sky-400" />
+                  <span>{item.metrics.views}</span>
+                </span>
+              )}
+            </div>
+          </div>
+        ) : videoSrc ? (
+          <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-black">
+            <video
+              src={`${videoSrc}#t=0.5`}
+              muted
+              playsInline
+              loop
+              preload="metadata"
+              onMouseEnter={(e) => {
+                e.currentTarget.play().catch(() => {});
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.pause();
+                e.currentTarget.currentTime = 0.5;
+              }}
+              className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-slate-950/35 group-hover:bg-slate-950/20 transition-colors pointer-events-none" />
+
+            {/* Play Button Overlay */}
+            <div className="absolute z-10 flex flex-col items-center justify-center pointer-events-none">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-sky-500/90 group-hover:bg-sky-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-all">
+                <Play className="w-5 h-5 fill-white ml-0.5" />
+              </div>
+            </div>
+
+            {/* Bottom Telemetry Ticker on Video Card */}
+            <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between pointer-events-none">
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-f1 font-bold bg-slate-900/90 text-sky-300 border border-sky-500/30">
+                <Film className="w-3 h-3" />
+                <span>{handleLabel}</span>
               </span>
 
               {item.metrics.views && (
@@ -72,11 +136,7 @@ export default function ProjectCard({ item, onSelect }: ProjectCardProps) {
         <div className="absolute top-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between pointer-events-none">
           {/* Company Badge */}
           <span
-            className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-[11px] font-sans font-bold tracking-wide uppercase shadow-md ${
-              isHexavia
-                ? 'bg-sky-500 text-white border border-sky-400'
-                : 'bg-slate-900 text-sky-400 border border-sky-500/40'
-            }`}
+            className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-[11px] font-sans font-bold tracking-wide uppercase shadow-md ${badgeStyle}`}
           >
             {item.company}
           </span>
@@ -90,10 +150,22 @@ export default function ProjectCard({ item, onSelect }: ProjectCardProps) {
               </span>
             )}
 
-            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-sans font-bold tracking-wider uppercase bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white shadow-md">
-              <Instagram className="w-2.5 h-2.5" />
-              <span>IG REEL</span>
-            </span>
+            {item.reelId ? (
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-sans font-bold tracking-wider uppercase bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white shadow-md">
+                <Instagram className="w-2.5 h-2.5" />
+                <span>IG REEL</span>
+              </span>
+            ) : isVideo ? (
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-sans font-bold tracking-wider uppercase bg-slate-900/90 text-white border border-white/20 shadow-md">
+                <Film className="w-2.5 h-2.5 text-sky-400" />
+                <span>VIDEO EDIT</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-sans font-bold tracking-wider uppercase bg-sky-600 text-white shadow-md">
+                <Image className="w-2.5 h-2.5" />
+                <span>GRAPHICS</span>
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -125,7 +197,7 @@ export default function ProjectCard({ item, onSelect }: ProjectCardProps) {
 
           <div className="flex items-center justify-between text-xs font-sans font-bold text-sky-600 group-hover:text-sky-700">
             <span className="tracking-wide uppercase">
-              {item.mediaType === 'video' ? 'WATCH FULL REEL' : 'VIEW WORK'}
+              {item.mediaType === 'video' ? 'WATCH FULL VIDEO' : 'VIEW WORK'}
             </span>
             <div className="flex items-center space-x-2">
               {item.instagramUrl && (

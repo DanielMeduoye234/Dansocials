@@ -152,6 +152,16 @@ export default function Hero({
             >
               <span>Tdotwheels</span>
             </button>
+
+            <button
+              onClick={() => {
+                const el = document.getElementById('other-video-projects');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg font-sans font-semibold text-xs bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 flex-shrink-0 transition-colors"
+            >
+              <span>Other Video Editing (Paidflow)</span>
+            </button>
           </div>
 
           {/* Recruiter Live Verification Links - Clean & Compact */}
@@ -257,9 +267,9 @@ export default function Hero({
                   </span>
                 </div>
                 <span className="font-sans font-black text-lg sm:text-2xl text-slate-900 tracking-tight">
-                  2
+                  3
                 </span>
-                <span className="text-[9px] sm:text-[10px] text-sky-600 font-medium">Hexavia &amp; Tdot</span>
+                <span className="text-[9px] sm:text-[10px] text-sky-600 font-medium">Hexavia, Tdot &amp; Paidflow</span>
               </div>
 
             </div>

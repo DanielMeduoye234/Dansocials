@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Company, MediaType, PortfolioItem } from '@/types/portfolio';
-import { savePortfolioItem, uploadMediaToSupabase } from '@/lib/supabase';
+import { savePortfolioItem, uploadMediaToSupabase, isVideoFile } from '@/lib/supabase';
 import confetti from 'canvas-confetti';
 import { 
   X, Plus, Play, Image, Sparkles, Check, Link as LinkIcon, 
@@ -48,13 +48,14 @@ export default function PostWorkModal({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const detectedVideo = isVideoFile(file);
     setIsUploading(true);
-    setUploadStatus('Uploading to Supabase Storage...');
+    setUploadStatus(`Uploading ${detectedVideo ? 'video' : 'image'}...`);
 
     try {
       const result = await uploadMediaToSupabase(file);
       if (result.url) {
-        if (file.type.startsWith('video/')) {
+        if (detectedVideo) {
           setVideoUrl(result.url);
           setMediaType('video');
           if (!mediaUrl) {
@@ -63,9 +64,13 @@ export default function PostWorkModal({
         } else {
           setMediaUrl(result.url);
         }
-        setUploadStatus('Uploaded to Supabase Cloud!');
+        setUploadStatus(
+          result.storage === 'local'
+            ? 'Uploaded to Local High-Capacity Storage!'
+            : 'Uploaded to Supabase Cloud!'
+        );
       } else {
-        alert(result.error || 'Failed to upload media to Supabase');
+        alert(result.error || 'Failed to upload media');
         setUploadStatus(null);
       }
     } catch (err: any) {
@@ -73,19 +78,28 @@ export default function PostWorkModal({
       setUploadStatus(null);
     } finally {
       setIsUploading(false);
+      e.target.value = '';
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUploading) {
+      alert('Please wait for your upload to finish before publishing.');
+      return;
+    }
     if (!title.trim()) {
       alert('Please enter a title for your work.');
       return;
     }
 
-    setIsSubmitting(true);
+    const fallbackUrl = videoUrl.trim() || mediaUrl.trim() || instagramUrl.trim();
+    if (!fallbackUrl) {
+      alert('Please upload a file or provide a media URL first.');
+      return;
+    }
 
-    const fallbackUrl = mediaUrl.trim() || videoUrl.trim() || instagramUrl.trim();
+    setIsSubmitting(true);
 
     const highlightsArray = strategyHighlights
       .split('\n')
@@ -240,7 +254,7 @@ export default function PostWorkModal({
               <label className="block font-f1 text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                 1. Select Company <span className="text-sky-600">*</span>
               </label>
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setCompany('Hexavia')}
@@ -282,6 +296,31 @@ export default function PostWorkModal({
                       Tdotwheels
                     </span>
                     <span className="text-[10px] text-slate-500">Automotive &amp; Wheels</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCompany('Paidflow');
+                    setMediaType('video');
+                  }}
+                  className={`p-3 rounded-xl border-2 text-left transition-all flex items-center space-x-2.5 ${
+                    company === 'Paidflow' || company === 'Other'
+                      ? 'border-rose-500 bg-rose-50/70 shadow-sm'
+                      : 'border-slate-200 bg-white hover:border-rose-200'
+                  }`}
+                >
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-f1 font-bold text-xs ${
+                    company === 'Paidflow' || company === 'Other' ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700'
+                  }`}>
+                    PF
+                  </div>
+                  <div>
+                    <span className="font-f1 font-extrabold text-xs block text-slate-900 uppercase">
+                      Paidflow / Other
+                    </span>
+                    <span className="text-[10px] text-slate-500">Other Video Editing</span>
                   </div>
                 </button>
               </div>
@@ -518,10 +557,12 @@ export default function PostWorkModal({
               <button
                 id="btn-submit-post-work"
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isUploading}
                 className="inline-flex items-center space-x-1.5 px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 via-sky-600 to-blue-600 hover:from-sky-600 text-white font-f1 font-extrabold text-xs uppercase tracking-wide shadow-md disabled:opacity-50"
               >
-                {isSubmitting ? (
+                {isUploading ? (
+                  <span>UPLOADING VIDEO...</span>
+                ) : isSubmitting ? (
                   <span>PUBLISHING...</span>
                 ) : (
                   <>

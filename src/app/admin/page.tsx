@@ -3,19 +3,33 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Company, MediaType, PortfolioItem } from '@/types/portfolio';
-import { 
-  getPortfolioItems, 
-  savePortfolioItem, 
-  deletePortfolioItem, 
-  uploadMediaToSupabase, 
+import {
+  getPortfolioItems,
+  savePortfolioItem,
+  deletePortfolioItem,
+  uploadMediaToSupabase,
+  isVideoFile,
   resetToSeedData,
-  isSupabaseConfigured 
+  isSupabaseConfigured,
 } from '@/lib/supabase';
-import { initialProjects } from '@/data/initialProjects';
 import confetti from 'canvas-confetti';
-import { 
-  ArrowLeft, Plus, Play, Image, Upload, Loader2, Cloud, Check, 
-  Trash2, ExternalLink, Instagram, Shield, Eye, Layers, Sparkles, AlertCircle
+import {
+  ArrowLeft,
+  Plus,
+  Play,
+  Image,
+  Upload,
+  Loader2,
+  Cloud,
+  Check,
+  Trash2,
+  ExternalLink,
+  Instagram,
+  Shield,
+  Eye,
+  Layers,
+  AlertCircle,
+  Film,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -43,6 +57,7 @@ export default function AdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [filterCompany, setFilterCompany] = useState<Company | 'All'>('All');
 
@@ -61,49 +76,67 @@ export default function AdminPage() {
     loadWorks();
   }, []);
 
-  // Handle direct file upload to Supabase Storage
+  // Handle direct file upload to Supabase Storage (with automatic local fallback for >50MB videos)
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const detectedVideo = isVideoFile(file);
     setIsUploading(true);
-    setUploadStatus('Uploading file to Supabase Cloud...');
+    setUploadError(null);
+    setUploadStatus(
+      `Uploading ${detectedVideo ? 'video' : 'image'} (${(file.size / (1024 * 1024)).toFixed(1)} MB)...`
+    );
 
     try {
       const result = await uploadMediaToSupabase(file);
       if (result.url) {
-        if (file.type.startsWith('video/')) {
+        if (detectedVideo) {
           setVideoUrl(result.url);
+          setMediaUrl(result.url);
           setMediaType('video');
-          if (!mediaUrl) setMediaUrl(result.url);
         } else {
           setMediaUrl(result.url);
+          setVideoUrl('');
           setMediaType('graphics');
         }
-        setUploadStatus('Successfully uploaded to Supabase Storage!');
+        setUploadStatus(
+          result.storage === 'local'
+            ? 'Video uploaded & ready (Saved to Local High-Capacity Storage)!'
+            : 'Successfully uploaded to Supabase Storage!'
+        );
       } else {
-        alert(result.error || 'Failed to upload media to Supabase');
+        setUploadError(result.error || 'Failed to upload media. Please try again.');
         setUploadStatus(null);
       }
     } catch (err: any) {
-      alert(err.message || 'Upload error');
+      setUploadError(err.message || 'Upload error occurred.');
       setUploadStatus(null);
     } finally {
       setIsUploading(false);
+      e.target.value = '';
     }
   };
 
   // Submit Post Work
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUploading) {
+      alert('Please wait for your video/media upload to finish before publishing.');
+      return;
+    }
     if (!title.trim()) {
       alert('Please enter a title for the work.');
       return;
     }
 
-    setIsSubmitting(true);
+    const resolvedMediaUrl = videoUrl.trim() || mediaUrl.trim() || instagramUrl.trim();
+    if (!resolvedMediaUrl) {
+      alert('Please upload a video/image file or paste an Instagram Reel / direct media URL first.');
+      return;
+    }
 
-    const fallbackUrl = mediaUrl.trim() || videoUrl.trim() || instagramUrl.trim();
+    setIsSubmitting(true);
 
     const tagsArray = tags
       .split(',')
@@ -117,31 +150,43 @@ export default function AdminPage() {
     const reelMatch = instagramUrl.match(/reel\/([a-zA-Z0-9_-]+)/);
     const reelId = reelMatch ? reelMatch[1] : undefined;
 
+    const isDirectVideoFile =
+      mediaType === 'video' &&
+      (Boolean(videoUrl.trim()) ||
+        resolvedMediaUrl.endsWith('.mp4') ||
+        resolvedMediaUrl.endsWith('.mov') ||
+        resolvedMediaUrl.endsWith('.webm'));
+
     const newItem: PortfolioItem = {
       id: `work-${Date.now()}`,
       title: title.trim(),
       company,
       mediaType,
-      mediaUrl: fallbackUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
-      thumbnailUrl: fallbackUrl || undefined,
-      videoUrl: mediaType === 'video' ? (videoUrl.trim() || undefined) : undefined,
+      mediaUrl: resolvedMediaUrl,
+      thumbnailUrl: isDirectVideoFile ? undefined : resolvedMediaUrl,
+      videoUrl: isDirectVideoFile ? videoUrl.trim() || resolvedMediaUrl : undefined,
       instagramUrl: instagramUrl.trim() || undefined,
       reelId,
-      description: description.trim() || `Campaign managed for ${company}. High-retention short-form video edit & social growth.`,
+      description:
+        description.trim() ||
+        `Campaign managed for ${company}. High-retention short-form video edit & social growth.`,
       strategyHighlights: [
         'Formula 1-inspired visual cadence & sound sync',
         'Optimized for initial 3-second hook retention',
-        'Audience positioning & virality architecture'
+        'Audience positioning & virality architecture',
       ],
       metrics: {
         views: views.trim() || '250K+',
         engagementRate: engagementRate.trim() || '8.4%',
         impressions: impressions.trim() || '650K',
         leadsOrSales: leadsOrSales.trim() || undefined,
-        roas: isMetaAd ? (roas.trim() || '4.5x ROAS') : undefined,
+        roas: isMetaAd ? roas.trim() || '4.5x ROAS' : undefined,
       },
       isMetaAd,
-      tags: tagsArray.length > 0 ? tagsArray : ['Growth', 'Viral', company, mediaType === 'video' ? 'Reels' : 'Design'],
+      tags:
+        tagsArray.length > 0
+          ? tagsArray
+          : ['Growth', 'Viral', company, mediaType === 'video' ? 'Reels' : 'Design'],
       createdAt: new Date().toISOString(),
       featured: true,
     };
@@ -155,7 +200,7 @@ export default function AdminPage() {
           particleCount: 80,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#0284c7', '#38bdf8', '#bae6fd', '#0369a1', '#2563eb']
+          colors: ['#0284c7', '#38bdf8', '#bae6fd', '#0369a1', '#2563eb'],
         });
       } catch (_) {}
 
@@ -176,6 +221,7 @@ export default function AdminPage() {
       setRoas('');
       setTags('');
       setUploadStatus(null);
+      setUploadError(null);
     } catch (err: any) {
       console.error(err);
       alert('Error saving work. Please try again.');
@@ -203,10 +249,10 @@ export default function AdminPage() {
 
   // Reset to default seed
   const handleResetToSeed = () => {
-    if (window.confirm('Reset portfolio to the 9 official verified Instagram reels?')) {
+    if (window.confirm('Reset portfolio to the official verified reels and Paidflow videos?')) {
       const def = resetToSeedData();
       setItems(def);
-      setSuccessMessage('Reset to official 9 Instagram Reels.');
+      setSuccessMessage('Reset to official reels & Paidflow video editing projects.');
       setTimeout(() => setSuccessMessage(null), 4000);
     }
   };
@@ -264,7 +310,6 @@ export default function AdminPage() {
 
       {/* Main Admin Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
-        
         {/* Success Alert Banner */}
         <AnimatePresence>
           {successMessage && (
@@ -305,7 +350,7 @@ export default function AdminPage() {
                 CREATE NEW PORTFOLIO ENTRY
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Paste your Instagram Reel link, upload files to Supabase, or add graphics for Hexavia &amp; Tdotwheels.
+                Upload videos or graphics for Hexavia, Tdotwheels, or Other Video Editing Projects (Paidflow).
               </p>
             </div>
 
@@ -318,15 +363,14 @@ export default function AdminPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
             {/* Step 1 & 2: Company & Media Type */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Company Selection */}
               <div>
                 <label className="block font-f1 text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                  1. Brand / Client <span className="text-sky-600">*</span>
+                  1. Brand / Project Section <span className="text-sky-600">*</span>
                 </label>
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <button
                     type="button"
                     onClick={() => setCompany('Hexavia')}
@@ -336,16 +380,22 @@ export default function AdminPage() {
                         : 'border-slate-200 bg-white hover:border-sky-200'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-f1 font-black text-xs ${
-                      company === 'Hexavia' ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-700'
-                    }`}>
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center font-f1 font-black text-xs flex-shrink-0 ${
+                        company === 'Hexavia'
+                          ? 'bg-sky-500 text-white'
+                          : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
                       HX
                     </div>
-                    <div>
-                      <span className="font-f1 font-extrabold text-xs block text-slate-900 uppercase">
+                    <div className="min-w-0">
+                      <span className="font-f1 font-extrabold text-xs block text-slate-900 uppercase truncate">
                         Hexavia
                       </span>
-                      <span className="text-[10px] text-slate-500">Corporate &amp; Strategy</span>
+                      <span className="text-[10px] text-slate-500 block truncate">
+                        Corporate &amp; Strategy
+                      </span>
                     </div>
                   </button>
 
@@ -358,16 +408,53 @@ export default function AdminPage() {
                         : 'border-slate-200 bg-white hover:border-sky-200'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-f1 font-black text-xs ${
-                      company === 'Tdotwheels' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'
-                    }`}>
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center font-f1 font-black text-xs flex-shrink-0 ${
+                        company === 'Tdotwheels'
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
                       TD
                     </div>
-                    <div>
-                      <span className="font-f1 font-extrabold text-xs block text-slate-900 uppercase">
+                    <div className="min-w-0">
+                      <span className="font-f1 font-extrabold text-xs block text-slate-900 uppercase truncate">
                         Tdotwheels
                       </span>
-                      <span className="text-[10px] text-slate-500">Automotive &amp; Wheels</span>
+                      <span className="text-[10px] text-slate-500 block truncate">
+                        Automotive &amp; Wheels
+                      </span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCompany('Paidflow');
+                      setMediaType('video');
+                    }}
+                    className={`p-3 rounded-2xl border-2 text-left transition-all flex items-center space-x-2.5 ${
+                      company === 'Paidflow' || company === 'Other'
+                        ? 'border-rose-500 bg-rose-50/70 shadow-sm'
+                        : 'border-slate-200 bg-white hover:border-rose-200'
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center font-f1 font-black text-xs flex-shrink-0 ${
+                        company === 'Paidflow' || company === 'Other'
+                          ? 'bg-rose-600 text-white'
+                          : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      PF
+                    </div>
+                    <div className="min-w-0">
+                      <span className="font-f1 font-extrabold text-xs block text-slate-900 uppercase truncate">
+                        Paidflow / Other
+                      </span>
+                      <span className="text-[10px] text-slate-500 block truncate">
+                        Other Video Editing
+                      </span>
                     </div>
                   </button>
                 </div>
@@ -388,7 +475,11 @@ export default function AdminPage() {
                         : 'border-slate-200 bg-white text-slate-700 hover:border-sky-200'
                     }`}
                   >
-                    <Play className={`w-4 h-4 ${mediaType === 'video' ? 'text-sky-600 fill-sky-600' : 'text-slate-400'}`} />
+                    <Play
+                      className={`w-4 h-4 ${
+                        mediaType === 'video' ? 'text-sky-600 fill-sky-600' : 'text-slate-400'
+                      }`}
+                    />
                     <span className="font-f1 font-extrabold text-xs uppercase">VIDEO / REEL</span>
                   </button>
 
@@ -401,8 +492,14 @@ export default function AdminPage() {
                         : 'border-slate-200 bg-white text-slate-700 hover:border-sky-200'
                     }`}
                   >
-                    <Image className={`w-4 h-4 ${mediaType === 'graphics' ? 'text-sky-600' : 'text-slate-400'}`} />
-                    <span className="font-f1 font-extrabold text-xs uppercase">GRAPHICS / POST</span>
+                    <Image
+                      className={`w-4 h-4 ${
+                        mediaType === 'graphics' ? 'text-sky-600' : 'text-slate-400'
+                      }`}
+                    />
+                    <span className="font-f1 font-extrabold text-xs uppercase">
+                      GRAPHICS / POST
+                    </span>
                   </button>
                 </div>
               </div>
@@ -416,7 +513,7 @@ export default function AdminPage() {
               <input
                 type="text"
                 required
-                placeholder="e.g. Mercedes-AMG G63 Custom Forged Wheels Reveal Reel"
+                placeholder="e.g. Paidflow Giant Mistakes Reel or Tdotwheels Forged Reveal"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none text-slate-900 text-sm font-medium transition-all"
@@ -425,23 +522,98 @@ export default function AdminPage() {
 
             {/* Media Upload & URLs */}
             <div className="space-y-3.5 bg-slate-50/70 p-4 rounded-2xl border border-slate-200">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-f1 text-xs font-bold uppercase tracking-wider text-slate-800">
-                  Media Source (Instagram Reel or Supabase Upload)
+                  Media Source (Upload Video/Image or Paste Link)
                 </span>
                 {uploadStatus && (
-                  <span className="text-[11px] font-semibold text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
-                    {isUploading && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+                  <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
+                    {isUploading ? (
+                      <Loader2 className="w-3 h-3 animate-spin mr-1 text-sky-600" />
+                    ) : (
+                      <Check className="w-3 h-3 mr-1 text-emerald-600" />
+                    )}
                     <span>{uploadStatus}</span>
                   </span>
                 )}
               </div>
 
+              {uploadError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-center space-x-2 text-xs text-rose-700">
+                  <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                  <span>{uploadError}</span>
+                </div>
+              )}
+
+              {/* Direct File Upload */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center space-x-1">
+                  <Cloud className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Upload Video (MP4 / MOV / WebM) or Image File:</span>
+                </label>
+                <label
+                  className={`flex items-center justify-center space-x-2 px-4 py-3 bg-white rounded-xl border-2 border-dashed transition-all text-xs font-medium ${
+                    isUploading
+                      ? 'border-sky-400 bg-sky-50 text-sky-700 cursor-wait'
+                      : 'border-sky-300 hover:border-sky-500 hover:bg-sky-50/50 cursor-pointer text-sky-700'
+                  }`}
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 text-sky-600 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4 text-sky-500" />
+                  )}
+                  <span>
+                    {isUploading
+                      ? uploadStatus || 'Uploading video, please wait...'
+                      : 'Click to select MP4 / MOV Video or Image (Up to 300MB supported)'}
+                  </span>
+                  <input
+                    type="file"
+                    accept="video/*,image/*,.mp4,.mov,.webm,.mkv"
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* Live Uploaded Video Preview */}
+              {videoUrl && (
+                <div className="p-3 rounded-xl bg-slate-900 text-white flex items-center justify-between gap-3">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <video
+                      src={videoUrl}
+                      muted
+                      playsInline
+                      className="w-16 h-16 rounded-lg object-cover bg-black border border-slate-700 flex-shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-f1 font-bold uppercase text-emerald-400 block">
+                        VIDEO READY TO PUBLISH
+                      </span>
+                      <span className="text-xs text-slate-300 truncate block">{videoUrl}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVideoUrl('');
+                      setMediaUrl('');
+                      setUploadStatus(null);
+                    }}
+                    className="text-xs text-rose-400 hover:text-rose-300 font-semibold px-2 py-1"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+
               {/* Instagram Reel URL */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center space-x-1">
                   <Instagram className="w-3.5 h-3.5 text-pink-600" />
-                  <span>Instagram Reel URL (Recommended for full embed):</span>
+                  <span>Or Instagram Reel URL (For official IG Embed):</span>
                 </label>
                 <input
                   type="url"
@@ -452,37 +624,27 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Supabase Storage Direct Upload */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center space-x-1">
-                  <Cloud className="w-3.5 h-3.5 text-sky-600" />
-                  <span>Or Upload Media to Supabase Cloud Storage:</span>
-                </label>
-                <label className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-white rounded-xl border-2 border-dashed border-sky-300 hover:border-sky-500 hover:bg-sky-50/50 cursor-pointer transition-all text-xs text-sky-700 font-medium">
-                  <Upload className="w-4 h-4 text-sky-500" />
-                  <span>
-                    {isUploading ? 'Uploading to Supabase...' : 'Click to select Image or MP4 video (max 50MB)'}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*,video/mp4,video/quicktime,video/webm"
-                    onChange={handleFileUpload}
-                    disabled={isUploading}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-
               {/* Custom Image / Video URL */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">
                   Or Direct Image / Video URL:
                 </label>
                 <input
-                  type="url"
-                  placeholder="https://... (Direct image or MP4 link)"
+                  type="text"
+                  placeholder="https://... or /videos/paidflow/..."
                   value={mediaUrl}
-                  onChange={(e) => setMediaUrl(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setMediaUrl(val);
+                    if (
+                      val.endsWith('.mp4') ||
+                      val.endsWith('.mov') ||
+                      val.endsWith('.webm')
+                    ) {
+                      setVideoUrl(val);
+                      setMediaType('video');
+                    }
+                  }}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-sky-500 outline-none text-slate-900 text-xs bg-white"
                 />
               </div>
@@ -558,7 +720,7 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Reels, Wheels, Virality, Luxury"
+                  placeholder="e.g. Paidflow, Video Editing, Reels, Virality"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 text-xs text-slate-900 outline-none"
@@ -570,10 +732,15 @@ export default function AdminPage() {
             <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="inline-flex items-center space-x-2 px-7 py-3 rounded-xl bg-gradient-to-r from-sky-500 via-sky-600 to-blue-600 hover:from-sky-600 text-white font-f1 font-extrabold text-xs uppercase tracking-wider shadow-md hover:shadow-lg disabled:opacity-50 transition-all"
+                disabled={isSubmitting || isUploading}
+                className="inline-flex items-center space-x-2 px-7 py-3 rounded-xl bg-gradient-to-r from-sky-500 via-sky-600 to-blue-600 hover:from-sky-600 text-white font-f1 font-extrabold text-xs uppercase tracking-wider shadow-md hover:shadow-lg disabled:opacity-50 transition-all cursor-pointer"
               >
-                {isSubmitting ? (
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>WAIT FOR VIDEO UPLOAD...</span>
+                  </>
+                ) : isSubmitting ? (
                   <span>PUBLISHING WORK...</span>
                 ) : (
                   <>
@@ -583,7 +750,6 @@ export default function AdminPage() {
                 )}
               </button>
             </div>
-
           </form>
         </section>
 
@@ -600,12 +766,14 @@ export default function AdminPage() {
               </h2>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl">
                 <button
                   onClick={() => setFilterCompany('All')}
                   className={`px-3 py-1 rounded-lg text-xs font-f1 font-bold transition-all ${
-                    filterCompany === 'All' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                    filterCompany === 'All'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   ALL
@@ -613,7 +781,9 @@ export default function AdminPage() {
                 <button
                   onClick={() => setFilterCompany('Hexavia')}
                   className={`px-3 py-1 rounded-lg text-xs font-f1 font-bold transition-all ${
-                    filterCompany === 'Hexavia' ? 'bg-sky-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                    filterCompany === 'Hexavia'
+                      ? 'bg-sky-500 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   HEXAVIA
@@ -621,19 +791,31 @@ export default function AdminPage() {
                 <button
                   onClick={() => setFilterCompany('Tdotwheels')}
                   className={`px-3 py-1 rounded-lg text-xs font-f1 font-bold transition-all ${
-                    filterCompany === 'Tdotwheels' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                    filterCompany === 'Tdotwheels'
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   TDOTWHEELS
+                </button>
+                <button
+                  onClick={() => setFilterCompany('Paidflow')}
+                  className={`px-3 py-1 rounded-lg text-xs font-f1 font-bold transition-all ${
+                    filterCompany === 'Paidflow'
+                      ? 'bg-rose-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  PAIDFLOW
                 </button>
               </div>
 
               <button
                 onClick={handleResetToSeed}
                 className="px-3 py-1.5 text-[11px] font-f1 font-bold text-slate-500 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
-                title="Restore original 9 seed reels"
+                title="Restore default seed works"
               >
-                Reset Default 9 Reels
+                Reset Default Seed
               </button>
             </div>
           </div>
@@ -651,7 +833,7 @@ export default function AdminPage() {
                       {item.reelId ? (
                         <Instagram className="w-6 h-6 text-pink-500" />
                       ) : item.mediaType === 'video' ? (
-                        <Play className="w-5 h-5 text-sky-400 fill-sky-400" />
+                        <Film className="w-5 h-5 text-sky-400" />
                       ) : (
                         <Image className="w-5 h-5 text-sky-400" />
                       )}
@@ -659,9 +841,15 @@ export default function AdminPage() {
 
                     <div className="min-w-0">
                       <div className="flex items-center space-x-1.5 mb-1">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-f1 font-bold uppercase ${
-                          item.company === 'Hexavia' ? 'bg-sky-100 text-sky-800' : 'bg-slate-900 text-sky-300'
-                        }`}>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-f1 font-bold uppercase ${
+                            item.company === 'Hexavia'
+                              ? 'bg-sky-100 text-sky-800'
+                              : item.company === 'Paidflow' || item.company === 'Other'
+                              ? 'bg-rose-100 text-rose-800'
+                              : 'bg-slate-900 text-sky-300'
+                          }`}
+                        >
                           {item.company}
                         </span>
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-f1 font-bold bg-slate-100 text-slate-600 uppercase">
@@ -712,7 +900,6 @@ export default function AdminPage() {
             </div>
           )}
         </section>
-
       </main>
     </div>
   );

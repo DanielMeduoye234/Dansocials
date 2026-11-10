@@ -46,6 +46,9 @@ export default function Footer({
               <span className="px-2 py-0.5 rounded text-[10px] font-f1 font-bold bg-slate-900 text-sky-400">
                 TDOTWHEELS
               </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-f1 font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                PAIDFLOW
+              </span>
             </div>
           </div>
 
